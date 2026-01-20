@@ -140,13 +140,27 @@ function createVehicles(config: WorldConfig): Vehicle[] {
 function createPeople(config: WorldConfig): Person[] {
   const people: Person[] = [];
 
-  // Create some pedestrians (not in cars)
-  for (let i = 0; i < 12; i++) {
+  // Guarantee at least one victim - someone too close to coast and too slow to escape
+  people.push({
+    id: `person-doomed`,
+    x: config.townStartX + randomRange(20, 80), // Very close to coast
+    y: config.groundLevel - 15,
+    speed: randomRange(25, 40), // Very slow - elderly or injured
+    fleeing: false,
+    runFrame: 0,
+    skinColorIndex: randomInt(0, 3),
+    clothesColorIndex: randomInt(0, 5),
+    survived: false,
+    caught: false,
+  });
+
+  // Create remaining pedestrians (not in cars)
+  for (let i = 0; i < 11; i++) {
     // Mix of speeds - some elderly/children who move slower
     const isSlow = Math.random() < 0.3;
     people.push({
       id: `person-${i}`,
-      x: randomRange(config.townStartX + 30, config.townEndX - 50),
+      x: randomRange(config.townStartX + 100, config.townEndX - 50),
       y: config.groundLevel - 15,
       speed: isSlow ? randomRange(40, 70) : randomRange(90, 140),
       fleeing: false,
