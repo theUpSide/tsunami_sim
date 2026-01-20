@@ -4,10 +4,13 @@ import styles from './ControlPanel.module.css';
 interface ControlPanelProps {
   magnitude: number;
   speed: number;
+  zoom: number;
   paused: boolean;
   phase: SimulationPhase;
   onMagnitudeChange: (magnitude: number) => void;
   onSpeedChange: (speed: number) => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
   onTogglePause: () => void;
   onStart: () => void;
   onReset: () => void;
@@ -27,10 +30,13 @@ const phaseLabels: Record<SimulationPhase, string> = {
 export function ControlPanel({
   magnitude,
   speed,
+  zoom,
   paused,
   phase,
   onMagnitudeChange,
   onSpeedChange,
+  onZoomIn,
+  onZoomOut,
   onTogglePause,
   onStart,
   onReset,
@@ -90,6 +96,20 @@ export function ControlPanel({
             <span>0.1x</span>
             <span>1x</span>
             <span>3x</span>
+          </div>
+        </div>
+
+        <div className={styles.control}>
+          <label>
+            Zoom: <strong>{(zoom * 100).toFixed(0)}%</strong>
+          </label>
+          <div className={styles.zoomButtons}>
+            <button onClick={onZoomOut} className={styles.zoomButton}>
+              −
+            </button>
+            <button onClick={onZoomIn} className={styles.zoomButton}>
+              +
+            </button>
           </div>
         </div>
 

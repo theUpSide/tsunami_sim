@@ -21,16 +21,29 @@ function App() {
     reset(state.magnitude);
   }, [reset, state.magnitude]);
 
+  const handleZoomIn = useCallback(() => {
+    const newZoom = Math.min(state.camera.zoom * 1.25, 2.0);
+    setCamera({ ...state.camera, zoom: newZoom });
+  }, [state.camera, setCamera]);
+
+  const handleZoomOut = useCallback(() => {
+    const newZoom = Math.max(state.camera.zoom / 1.25, 0.25);
+    setCamera({ ...state.camera, zoom: newZoom });
+  }, [state.camera, setCamera]);
+
   return (
     <div className="app">
       <SimulationCanvas state={state} onCameraChange={setCamera} />
       <ControlPanel
         magnitude={state.magnitude}
         speed={state.speed}
+        zoom={state.camera.zoom}
         paused={state.paused}
         phase={state.phase}
         onMagnitudeChange={setMagnitude}
         onSpeedChange={setSpeed}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
         onTogglePause={togglePause}
         onStart={start}
         onReset={handleReset}
