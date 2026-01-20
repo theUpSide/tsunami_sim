@@ -66,6 +66,7 @@ export function SimulationCanvas({ state, onCameraChange }: SimulationCanvasProp
         height: '100%',
         cursor: isDragging ? 'grabbing' : 'grab',
         display: 'block',
+        touchAction: 'none', // Prevent default touch behavior for panning
       }}
       {...handlers}
     />

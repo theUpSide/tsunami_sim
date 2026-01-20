@@ -135,8 +135,8 @@ export function ControlPanel({
       <div className={styles.instructions}>
         <p><strong>Controls:</strong></p>
         <ul>
-          <li>Drag to pan the view</li>
-          <li>Scroll to zoom in/out</li>
+          <li>Drag or touch to pan</li>
+          <li>Scroll or use +/− to zoom</li>
         </ul>
       </div>
     </div>

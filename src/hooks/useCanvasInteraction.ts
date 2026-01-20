@@ -81,6 +81,39 @@ export function useCanvasInteraction({
     [camera, onCameraChange, minZoom, maxZoom, worldWidth, worldHeight]
   );
 
+  // Touch event handlers for mobile
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      lastMousePos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isDragging || e.touches.length !== 1) return;
+
+      const touch = e.touches[0];
+      const dx = touch.clientX - lastMousePos.current.x;
+      const dy = touch.clientY - lastMousePos.current.y;
+      lastMousePos.current = { x: touch.clientX, y: touch.clientY };
+
+      const newX = clamp(camera.x - dx / camera.zoom, 0, worldWidth - 800);
+      const newY = clamp(camera.y - dy / camera.zoom, -200, worldHeight - 400);
+
+      onCameraChange({
+        ...camera,
+        x: newX,
+        y: newY,
+      });
+    },
+    [isDragging, camera, onCameraChange, worldWidth, worldHeight]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
   return {
     isDragging,
     handlers: {
@@ -89,6 +122,9 @@ export function useCanvasInteraction({
       onMouseUp: handleMouseUp,
       onMouseLeave: handleMouseLeave,
       onWheel: handleWheel,
+      onTouchStart: handleTouchStart,
+      onTouchMove: handleTouchMove,
+      onTouchEnd: handleTouchEnd,
     },
   };
 }
