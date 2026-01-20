@@ -79,17 +79,17 @@ export function ControlPanel({
           <input
             id="speed"
             type="range"
-            min="0.25"
-            max="4"
-            step="0.25"
+            min="0.1"
+            max="3"
+            step="0.1"
             value={speed}
             onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
             className={styles.slider}
           />
           <div className={styles.sliderLabels}>
-            <span>0.25x</span>
+            <span>0.1x</span>
             <span>1x</span>
-            <span>4x</span>
+            <span>3x</span>
           </div>
         </div>
 

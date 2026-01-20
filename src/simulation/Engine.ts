@@ -15,12 +15,12 @@ import { DEFAULT_WORLD_CONFIG } from './types';
 
 const PHASE_DURATIONS: Record<SimulationPhase, number> = {
   idle: Infinity,
-  earthquake: 4000,
-  waveFormation: 3000,
-  waveTravel: 6000,
-  waveShoaling: 4000,
-  waveBreaking: 3000,
-  inundation: 8000,
+  earthquake: 8000,
+  waveFormation: 6000,
+  waveTravel: 12000,
+  waveShoaling: 8000,
+  waveBreaking: 6000,
+  inundation: 15000,
   aftermath: Infinity,
 };
 
@@ -35,9 +35,9 @@ export function createInitialState(magnitude: number = 7.0): SimulationState {
     paused: false,
     magnitude,
     camera: {
-      x: config.width / 2 - 600,
-      y: 0,
-      zoom: 1,
+      x: 200,
+      y: 100,
+      zoom: 0.55,
     },
     earthquake: {
       magnitude,

@@ -12,10 +12,10 @@ export const colors = {
     wave: '#00d2d3',
   },
   seafloor: {
-    deep: '#2c1810',
-    shallow: '#5d4037',
+    deep: '#4a3728',
+    shallow: '#8b6914',
     sand: '#d4a574',
-    rock: '#4a4a4a',
+    rock: '#5c4033',
   },
   land: {
     grass: '#228b22',

@@ -35,7 +35,7 @@ function App() {
         onStart={start}
         onReset={handleReset}
       />
-      <FactDisplay fact={state.currentFact} />
+      <FactDisplay fact={state.currentFact} phase={state.phase} />
       <StatsDisplay phase={state.phase} stats={state.stats} />
     </div>
   );

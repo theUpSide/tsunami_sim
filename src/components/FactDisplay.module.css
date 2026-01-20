@@ -5,23 +5,43 @@
   transform: translateX(-50%) translateY(20px);
   background: rgba(10, 25, 47, 0.95);
   border-radius: 12px;
-  padding: 16px 24px;
+  padding: 0;
   color: white;
-  max-width: 600px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 650px;
+  min-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
   opacity: 0;
-  transition: all 0.3s ease-out;
+  transition: all 0.5s ease-out;
   z-index: 100;
+  overflow: hidden;
 }
 
 .container.visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+.header {
+  background: linear-gradient(135deg, rgba(0, 210, 211, 0.3), rgba(116, 185, 255, 0.2));
+  padding: 8px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.phaseTag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #00d2d3;
+  font-weight: 700;
+}
+
+.body {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
 }
 
 .icon {
@@ -32,20 +52,20 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #00d2d3;
+  color: rgba(255, 255, 255, 0.5);
   font-weight: 600;
 }
 
 .fact {
   margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.95);
 }

@@ -132,48 +132,70 @@ export class Renderer {
     ctx.strokeStyle = colors.seafloor.rock;
     ctx.lineWidth = 3;
 
-    // Left plate
-    ctx.fillStyle = '#3a3a3a';
+    // Left plate (oceanic plate)
+    ctx.fillStyle = '#5c4033';
     ctx.beginPath();
-    ctx.moveTo(epicenter - 400, plateY);
+    ctx.moveTo(epicenter - 500, plateY);
     ctx.lineTo(epicenter - 50, plateY);
-    ctx.lineTo(epicenter - 50, plateY + 80 - offset);
-    ctx.lineTo(epicenter - 400, plateY + 80);
+    ctx.lineTo(epicenter - 50, plateY + 100 - offset);
+    ctx.lineTo(epicenter - 500, plateY + 100);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Right plate (moves during earthquake)
-    ctx.fillStyle = '#4a4a4a';
+    // Right plate (continental plate - moves during earthquake)
+    ctx.fillStyle = '#6b5344';
     ctx.beginPath();
     ctx.moveTo(epicenter + 50, plateY);
-    ctx.lineTo(epicenter + 400, plateY);
-    ctx.lineTo(epicenter + 400, plateY + 80);
-    ctx.lineTo(epicenter + 50, plateY + 80 + offset);
+    ctx.lineTo(epicenter + 500, plateY);
+    ctx.lineTo(epicenter + 500, plateY + 100);
+    ctx.lineTo(epicenter + 50, plateY + 100 + offset);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Fault line
+    // Fault line (subduction zone)
     ctx.strokeStyle = '#ff4444';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 8]);
     ctx.beginPath();
-    ctx.moveTo(epicenter, plateY - 20);
-    ctx.lineTo(epicenter, plateY + 100);
+    ctx.moveTo(epicenter, plateY - 30);
+    ctx.lineTo(epicenter, plateY + 120);
     ctx.stroke();
     ctx.setLineDash([]);
+
+    // Epicenter marker
+    const markerY = this.config.seaLevel + 50;
+    ctx.fillStyle = '#ff4444';
+    ctx.beginPath();
+    ctx.arc(epicenter, markerY, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Epicenter label
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 14px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('EPICENTER', epicenter, markerY - 25);
+
+    // Plate labels
+    ctx.font = '12px Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillText('Oceanic Plate', epicenter - 250, plateY + 60);
+    ctx.fillText('Continental Plate', epicenter + 250, plateY + 60);
   }
 
   private drawOcean(state: SimulationState) {
     const ctx = this.ctx;
     const config = this.config;
 
-    // Ocean water
+    // Ocean water - semi-transparent to show seafloor beneath
     const gradient = ctx.createLinearGradient(0, config.seaLevel - 100, 0, config.seaLevel + 200);
-    gradient.addColorStop(0, hexToRgba(colors.ocean.surface, 0.7));
-    gradient.addColorStop(0.3, hexToRgba(colors.ocean.shallow, 0.8));
-    gradient.addColorStop(1, hexToRgba(colors.ocean.deep, 0.9));
+    gradient.addColorStop(0, hexToRgba(colors.ocean.surface, 0.5));
+    gradient.addColorStop(0.3, hexToRgba(colors.ocean.shallow, 0.55));
+    gradient.addColorStop(1, hexToRgba(colors.ocean.deep, 0.6));
 
     ctx.fillStyle = gradient;
     ctx.beginPath();
