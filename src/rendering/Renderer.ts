@@ -129,62 +129,109 @@ export class Renderer {
     const plateY = this.config.seaLevel + this.config.oceanDepth - 50;
     const offset = state.earthquake.plateOffset;
 
+    // Horizontal collision offset - plates push against each other
+    const collisionOffset = state.earthquake.active ? Math.abs(offset) * 0.5 : 0;
+
     ctx.strokeStyle = colors.seafloor.rock;
     ctx.lineWidth = 3;
 
-    // Left plate (oceanic plate)
+    // Left plate (oceanic plate) - subducts under the continental plate
+    // Moves right during collision
     ctx.fillStyle = '#5c4033';
     ctx.beginPath();
-    ctx.moveTo(epicenter - 500, plateY);
-    ctx.lineTo(epicenter - 50, plateY);
-    ctx.lineTo(epicenter - 50, plateY + 100 - offset);
-    ctx.lineTo(epicenter - 500, plateY + 100);
+    ctx.moveTo(epicenter - 550, plateY + 20);
+    ctx.lineTo(epicenter - 20 + collisionOffset, plateY + 20);
+    // Subduction zone - plate dips down under the other
+    ctx.lineTo(epicenter + 30 + collisionOffset, plateY + 80 - offset);
+    ctx.lineTo(epicenter + 50 + collisionOffset, plateY + 140);
+    ctx.lineTo(epicenter - 550, plateY + 120);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Right plate (continental plate - moves during earthquake)
+    // Right plate (continental plate) - rides over the oceanic plate
+    // Moves left during collision and rises up
     ctx.fillStyle = '#6b5344';
     ctx.beginPath();
-    ctx.moveTo(epicenter + 50, plateY);
-    ctx.lineTo(epicenter + 500, plateY);
-    ctx.lineTo(epicenter + 500, plateY + 100);
-    ctx.lineTo(epicenter + 50, plateY + 100 + offset);
+    ctx.moveTo(epicenter - 10 - collisionOffset, plateY - offset * 0.3);
+    ctx.lineTo(epicenter + 550, plateY);
+    ctx.lineTo(epicenter + 550, plateY + 100);
+    ctx.lineTo(epicenter + 20 - collisionOffset, plateY + 100 + offset * 0.5);
+    // Overlap zone
+    ctx.lineTo(epicenter - 10 - collisionOffset, plateY + 60 + offset * 0.3);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+
+    // Friction sparks during earthquake
+    if (state.earthquake.active && Math.random() > 0.5) {
+      ctx.fillStyle = '#ffaa00';
+      for (let i = 0; i < 3; i++) {
+        const sparkX = epicenter + (Math.random() - 0.5) * 40;
+        const sparkY = plateY + 40 + Math.random() * 40;
+        ctx.beginPath();
+        ctx.arc(sparkX, sparkY, 2 + Math.random() * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
 
     // Fault line (subduction zone)
     ctx.strokeStyle = '#ff4444';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([8, 8]);
+    ctx.lineWidth = 4;
+    ctx.setLineDash([10, 6]);
     ctx.beginPath();
-    ctx.moveTo(epicenter, plateY - 30);
-    ctx.lineTo(epicenter, plateY + 120);
+    ctx.moveTo(epicenter, plateY - 40);
+    ctx.lineTo(epicenter + 40, plateY + 150);
     ctx.stroke();
     ctx.setLineDash([]);
 
     // Epicenter marker
-    const markerY = this.config.seaLevel + 50;
+    const markerY = this.config.seaLevel + 80;
     ctx.fillStyle = '#ff4444';
     ctx.beginPath();
-    ctx.arc(epicenter, markerY, 12, 0, Math.PI * 2);
+    ctx.arc(epicenter, markerY, 15, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.stroke();
 
-    // Epicenter label
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('EPICENTER', epicenter, markerY - 25);
+    // Pulsing effect during earthquake
+    if (state.earthquake.active) {
+      ctx.strokeStyle = 'rgba(255, 68, 68, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(epicenter, markerY, 20 + Math.abs(offset), 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
-    // Plate labels
-    ctx.font = '12px Arial, sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.fillText('Oceanic Plate', epicenter - 250, plateY + 60);
-    ctx.fillText('Continental Plate', epicenter + 250, plateY + 60);
+    // Epicenter label - BIGGER FONT
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.lineWidth = 4;
+    ctx.strokeText('EPICENTER', epicenter, markerY - 35);
+    ctx.fillText('EPICENTER', epicenter, markerY - 35);
+
+    // Plate labels - BIGGER FONT
+    ctx.font = 'bold 18px Arial, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.lineWidth = 3;
+    ctx.strokeText('Oceanic Plate', epicenter - 280, plateY + 75);
+    ctx.fillText('Oceanic Plate', epicenter - 280, plateY + 75);
+    ctx.strokeText('Continental Plate', epicenter + 280, plateY + 55);
+    ctx.fillText('Continental Plate', epicenter + 280, plateY + 55);
+
+    // Subduction label during earthquake
+    if (state.earthquake.active) {
+      ctx.font = 'bold 14px Arial, sans-serif';
+      ctx.fillStyle = '#ffaa00';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.lineWidth = 3;
+      ctx.strokeText('SUBDUCTION ZONE', epicenter + 20, plateY + 130);
+      ctx.fillText('SUBDUCTION ZONE', epicenter + 20, plateY + 130);
+    }
   }
 
   private drawOcean(state: SimulationState) {
