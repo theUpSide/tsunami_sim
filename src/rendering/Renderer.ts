@@ -38,6 +38,8 @@ export class Renderer {
     this.drawDebris(state);
     this.drawParticles(state);
     this.drawWave(state);
+    // Draw inundation water LAST so it appears on top of everything
+    this.drawInundationWater(state);
 
     ctx.restore();
   }
@@ -554,5 +556,102 @@ export class Renderer {
       ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
       ctx.fill();
     });
+  }
+
+  private drawInundationWater(state: SimulationState) {
+    // Only draw during inundation and aftermath phases
+    if (state.phase !== 'inundation' && state.phase !== 'aftermath' && state.phase !== 'waveBreaking') {
+      return;
+    }
+
+    const ctx = this.ctx;
+    const config = this.config;
+
+    // Find water levels that are in the town area
+    const townWaterLevels = state.waterLevels.filter(
+      (level) => level.x >= config.coastEndX && level.currentLevel < level.baseLevel
+    );
+
+    if (townWaterLevels.length === 0) return;
+
+    // Create gradient for inundation water
+    const gradient = ctx.createLinearGradient(
+      config.coastEndX,
+      config.groundLevel,
+      config.townEndX,
+      config.groundLevel - 100
+    );
+    gradient.addColorStop(0, 'rgba(0, 100, 150, 0.75)');
+    gradient.addColorStop(0.5, 'rgba(0, 77, 120, 0.7)');
+    gradient.addColorStop(1, 'rgba(0, 60, 100, 0.6)');
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+
+    // Start from the coast
+    let started = false;
+    let lastX = config.coastEndX;
+
+    state.waterLevels.forEach((level) => {
+      if (level.x >= config.coastEndX - 50) {
+        const waterHeight = level.baseLevel - level.currentLevel;
+        if (waterHeight > 2) {
+          if (!started) {
+            ctx.moveTo(level.x, config.groundLevel);
+            started = true;
+          }
+          ctx.lineTo(level.x, level.currentLevel);
+          lastX = level.x;
+        }
+      }
+    });
+
+    if (started) {
+      // Close the shape along the ground
+      ctx.lineTo(lastX, config.groundLevel);
+      ctx.lineTo(config.coastEndX - 50, config.groundLevel);
+      ctx.closePath();
+      ctx.fill();
+
+      // Draw foam/turbulence at the water front
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      state.waterLevels.forEach((level) => {
+        if (level.x >= config.townStartX) {
+          const waterHeight = level.baseLevel - level.currentLevel;
+          if (waterHeight > 5) {
+            // Foam bubbles
+            for (let i = 0; i < 3; i++) {
+              const foamX = level.x + (Math.random() - 0.5) * 20;
+              const foamY = level.currentLevel + Math.random() * 10;
+              const foamSize = 2 + Math.random() * 4;
+              ctx.beginPath();
+              ctx.arc(foamX, foamY, foamSize, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+      });
+
+      // Draw wave crest at the leading edge of inundation
+      if (state.phase === 'inundation') {
+        const frontLevel = townWaterLevels[townWaterLevels.length - 1];
+        if (frontLevel) {
+          const waterHeight = frontLevel.baseLevel - frontLevel.currentLevel;
+          if (waterHeight > 10) {
+            // Curling wave at front
+            ctx.fillStyle = 'rgba(0, 150, 200, 0.8)';
+            ctx.beginPath();
+            ctx.arc(frontLevel.x + 20, frontLevel.currentLevel + 5, waterHeight * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // White foam cap
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.beginPath();
+            ctx.arc(frontLevel.x + 25, frontLevel.currentLevel, waterHeight * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+    }
   }
 }

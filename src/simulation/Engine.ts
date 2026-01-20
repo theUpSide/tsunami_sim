@@ -141,11 +141,26 @@ function createPeople(config: WorldConfig): Person[] {
   const people: Person[] = [];
 
   // Guarantee at least one victim - someone too close to coast and too slow to escape
+  // This person is marked specially so they won't flee until it's too late
   people.push({
-    id: `person-doomed`,
-    x: config.townStartX + randomRange(20, 80), // Very close to coast
+    id: `person-doomed-1`,
+    x: config.townStartX + randomRange(10, 40), // Very close to coast
     y: config.groundLevel - 15,
-    speed: randomRange(25, 40), // Very slow - elderly or injured
+    speed: randomRange(15, 25), // Extremely slow - cannot outrun wave
+    fleeing: false,
+    runFrame: 0,
+    skinColorIndex: randomInt(0, 3),
+    clothesColorIndex: randomInt(0, 5),
+    survived: false,
+    caught: false,
+  });
+
+  // Add a second potential victim nearby
+  people.push({
+    id: `person-doomed-2`,
+    x: config.townStartX + randomRange(50, 100),
+    y: config.groundLevel - 15,
+    speed: randomRange(20, 30),
     fleeing: false,
     runFrame: 0,
     skinColorIndex: randomInt(0, 3),
@@ -274,10 +289,10 @@ function updateEarthquake(state: SimulationState, _dt: number, _config: WorldCon
   state.earthquake.shakeIntensity = intensity * 20;
   state.earthquake.plateOffset = Math.sin(progress * Math.PI * 2) * intensity * 30;
 
-  // Start alerting people near the end of earthquake
+  // Start alerting people near the end of earthquake (but not doomed people yet)
   if (progress > 0.7) {
     state.people.forEach((person) => {
-      if (Math.random() < 0.02) {
+      if (!person.id.startsWith('person-doomed') && Math.random() < 0.02) {
         person.fleeing = true;
       }
     });
@@ -325,9 +340,10 @@ function updateWaveTravel(state: SimulationState, dt: number, config: WorldConfi
   });
 
   // More people start fleeing and evacuating vehicles as they notice the wave
+  // Doomed people don't notice the danger yet
   if (progress > 0.3) {
     state.people.forEach((person) => {
-      if (!person.fleeing && Math.random() < 0.015) {
+      if (!person.fleeing && !person.id.startsWith('person-doomed') && Math.random() < 0.015) {
         person.fleeing = true;
       }
     });
@@ -364,8 +380,16 @@ function updateWaveShoaling(state: SimulationState, dt: number, config: WorldCon
     }
   });
 
-  // Everyone should be fleeing now - evacuate all remaining vehicles
-  state.people.forEach((person) => (person.fleeing = true));
+  // Most people should be fleeing now - evacuate all remaining vehicles
+  // Doomed people finally notice but it's too late
+  state.people.forEach((person) => {
+    if (!person.id.startsWith('person-doomed')) {
+      person.fleeing = true;
+    } else if (progress > 0.7) {
+      // Doomed people finally start running but too late
+      person.fleeing = true;
+    }
+  });
   state.vehicles.forEach((vehicle) => {
     if (!vehicle.evacuated) {
       evacuateVehicle(vehicle, state, config);
