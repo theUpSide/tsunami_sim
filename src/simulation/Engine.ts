@@ -118,7 +118,7 @@ function createVehicles(config: WorldConfig): Vehicle[] {
   const vehicles: Vehicle[] = [];
   const roadY = config.groundLevel;
 
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 15; i++) {
     vehicles.push({
       id: `vehicle-${i}`,
       x: randomRange(config.townStartX + 50, config.townEndX - 100),
@@ -129,6 +129,8 @@ function createVehicles(config: WorldConfig): Vehicle[] {
       speed: 0,
       fleeing: false,
       destroyed: false,
+      occupants: randomInt(1, 4),
+      evacuated: false,
     });
   }
 
@@ -138,12 +140,15 @@ function createVehicles(config: WorldConfig): Vehicle[] {
 function createPeople(config: WorldConfig): Person[] {
   const people: Person[] = [];
 
-  for (let i = 0; i < 25; i++) {
+  // Create some pedestrians (not in cars)
+  for (let i = 0; i < 12; i++) {
+    // Mix of speeds - some elderly/children who move slower
+    const isSlow = Math.random() < 0.3;
     people.push({
       id: `person-${i}`,
       x: randomRange(config.townStartX + 30, config.townEndX - 50),
       y: config.groundLevel - 15,
-      speed: randomRange(80, 150),
+      speed: isSlow ? randomRange(40, 70) : randomRange(90, 140),
       fleeing: false,
       runFrame: 0,
       skinColorIndex: randomInt(0, 3),
@@ -154,6 +159,30 @@ function createPeople(config: WorldConfig): Person[] {
   }
 
   return people;
+}
+
+function evacuateVehicle(vehicle: Vehicle, state: SimulationState, config: WorldConfig) {
+  if (vehicle.evacuated || vehicle.destroyed) return;
+
+  vehicle.evacuated = true;
+
+  // Spawn people from the vehicle
+  for (let i = 0; i < vehicle.occupants; i++) {
+    const isSlow = Math.random() < 0.25;
+    const person: Person = {
+      id: `evacuee-${vehicle.id}-${i}`,
+      x: vehicle.x + randomRange(-10, 10),
+      y: config.groundLevel - 15,
+      speed: isSlow ? randomRange(35, 60) : randomRange(80, 130),
+      fleeing: true,
+      runFrame: Math.random() * Math.PI * 2,
+      skinColorIndex: randomInt(0, 3),
+      clothesColorIndex: randomInt(0, 5),
+      survived: false,
+      caught: false,
+    };
+    state.people.push(person);
+  }
 }
 
 export function updateSimulation(
@@ -281,16 +310,17 @@ function updateWaveTravel(state: SimulationState, dt: number, config: WorldConfi
     }
   });
 
-  // More people start fleeing as they notice
+  // More people start fleeing and evacuating vehicles as they notice the wave
   if (progress > 0.3) {
     state.people.forEach((person) => {
-      if (!person.fleeing && Math.random() < 0.01) {
+      if (!person.fleeing && Math.random() < 0.015) {
         person.fleeing = true;
       }
     });
+    // People start getting out of cars
     state.vehicles.forEach((vehicle) => {
-      if (!vehicle.fleeing && Math.random() < 0.005) {
-        vehicle.fleeing = true;
+      if (!vehicle.evacuated && Math.random() < 0.008) {
+        evacuateVehicle(vehicle, state, config);
       }
     });
   }
@@ -320,9 +350,13 @@ function updateWaveShoaling(state: SimulationState, dt: number, config: WorldCon
     }
   });
 
-  // Everyone should be fleeing now
+  // Everyone should be fleeing now - evacuate all remaining vehicles
   state.people.forEach((person) => (person.fleeing = true));
-  state.vehicles.forEach((vehicle) => (vehicle.fleeing = true));
+  state.vehicles.forEach((vehicle) => {
+    if (!vehicle.evacuated) {
+      evacuateVehicle(vehicle, state, config);
+    }
+  });
 
   updateFleeingEntities(state, dt, config);
 
@@ -456,7 +490,7 @@ function updateAftermath(state: SimulationState, dt: number, config: WorldConfig
 }
 
 function updateFleeingEntities(state: SimulationState, dt: number, _config: WorldConfig) {
-  // People running
+  // People running away from the coast
   state.people.forEach((person) => {
     if (person.fleeing && !person.caught) {
       person.x += person.speed * (dt / 1000);
@@ -464,13 +498,8 @@ function updateFleeingEntities(state: SimulationState, dt: number, _config: Worl
     }
   });
 
-  // Vehicles fleeing
-  state.vehicles.forEach((vehicle) => {
-    if (vehicle.fleeing && !vehicle.destroyed) {
-      vehicle.speed = lerp(vehicle.speed, 150, 0.1);
-      vehicle.x += vehicle.speed * (dt / 1000);
-    }
-  });
+  // Vehicles stay in place - people have abandoned them
+  // They will be destroyed when the water reaches them
 }
 
 function updateParticles(state: SimulationState, dt: number) {

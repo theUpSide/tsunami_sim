@@ -51,6 +51,8 @@ export interface Vehicle {
   speed: number;
   fleeing: boolean;
   destroyed: boolean;
+  occupants: number;
+  evacuated: boolean;
 }
 
 export interface Person {
