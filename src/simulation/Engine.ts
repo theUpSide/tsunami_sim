@@ -423,10 +423,20 @@ function updateEarthquake(state: SimulationState, _dt: number, _config: WorldCon
   state.earthquake.shakeIntensity = intensity * 20;
   state.earthquake.plateOffset = Math.sin(progress * Math.PI * 2) * intensity * 30;
 
-  // Start alerting people near the end of earthquake (but not doomed people yet)
+  // Start alerting people near the end of earthquake
+  // Doomed and at-risk people are slower to react
   if (progress > 0.7) {
     state.people.forEach((person) => {
-      if (!person.id.startsWith('person-doomed') && Math.random() < 0.02) {
+      if (person.id.startsWith('person-doomed')) {
+        // Doomed people don't react to earthquake
+        return;
+      }
+      if (person.id.startsWith('person-atrisk')) {
+        // At-risk people have lower chance of reacting
+        if (Math.random() < 0.008) {
+          person.fleeing = true;
+        }
+      } else if (Math.random() < 0.02) {
         person.fleeing = true;
       }
     });
@@ -474,10 +484,20 @@ function updateWaveTravel(state: SimulationState, dt: number, config: WorldConfi
   });
 
   // More people start fleeing and evacuating vehicles as they notice the wave
-  // Doomed people don't notice the danger yet
+  // Doomed and at-risk people are slower to notice
   if (progress > 0.3) {
     state.people.forEach((person) => {
-      if (!person.fleeing && !person.id.startsWith('person-doomed') && Math.random() < 0.015) {
+      if (person.fleeing) return;
+      if (person.id.startsWith('person-doomed')) {
+        // Doomed people still don't notice
+        return;
+      }
+      if (person.id.startsWith('person-atrisk')) {
+        // At-risk people are slower to react
+        if (Math.random() < 0.006) {
+          person.fleeing = true;
+        }
+      } else if (Math.random() < 0.015) {
         person.fleeing = true;
       }
     });
@@ -515,12 +535,19 @@ function updateWaveShoaling(state: SimulationState, dt: number, config: WorldCon
   });
 
   // Most people should be fleeing now - evacuate all remaining vehicles
-  // Doomed people finally notice but it's too late
+  // Doomed and at-risk people finally notice but it may be too late
   state.people.forEach((person) => {
-    if (!person.id.startsWith('person-doomed')) {
-      person.fleeing = true;
-    } else if (progress > 0.7) {
-      // Doomed people finally start running but too late
+    if (person.id.startsWith('person-doomed')) {
+      // Doomed people finally start running at 70% - way too late
+      if (progress > 0.7) {
+        person.fleeing = true;
+      }
+    } else if (person.id.startsWith('person-atrisk')) {
+      // At-risk people start fleeing at 30% - may or may not make it
+      if (progress > 0.3) {
+        person.fleeing = true;
+      }
+    } else {
       person.fleeing = true;
     }
   });
