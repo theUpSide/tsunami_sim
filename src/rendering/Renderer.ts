@@ -32,6 +32,7 @@ export class Renderer {
     this.drawSeafloor(state);
     this.drawOcean(state);
     this.drawLand();
+    this.drawTownSigns(state);
     this.drawBuildings(state);
     this.drawVehicles(state);
     this.drawPeople(state);
@@ -365,6 +366,81 @@ export class Renderer {
     ctx.setLineDash([]);
   }
 
+  private drawTownSigns(state: SimulationState) {
+    const ctx = this.ctx;
+    const config = this.config;
+
+    state.towns.forEach((town) => {
+      const signX = town.x + town.width / 2;
+      const signY = config.groundLevel - 140;
+
+      // Determine sign colors based on town type
+      let bgColor: string;
+      let borderColor: string;
+      let textColor: string;
+      let signWidth: number;
+      let signHeight: number;
+
+      if (town.type === 'city') {
+        bgColor = '#1a5f2a';
+        borderColor = '#ffffff';
+        textColor = '#ffffff';
+        signWidth = Math.max(120, town.name.length * 10 + 30);
+        signHeight = 50;
+      } else if (town.type === 'town') {
+        bgColor = '#2e7d32';
+        borderColor = '#ffffff';
+        textColor = '#ffffff';
+        signWidth = Math.max(100, town.name.length * 9 + 25);
+        signHeight = 40;
+      } else {
+        bgColor = '#4a7c59';
+        borderColor = '#e0e0e0';
+        textColor = '#ffffff';
+        signWidth = Math.max(80, town.name.length * 8 + 20);
+        signHeight = 32;
+      }
+
+      // Sign post
+      ctx.fillStyle = '#5d4037';
+      ctx.fillRect(signX - 4, signY + signHeight, 8, 50);
+
+      // Sign background
+      ctx.fillStyle = bgColor;
+      ctx.beginPath();
+      ctx.roundRect(signX - signWidth / 2, signY, signWidth, signHeight, 4);
+      ctx.fill();
+
+      // Sign border
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Town name
+      ctx.fillStyle = textColor;
+      ctx.font = town.type === 'city' ? 'bold 18px Arial, sans-serif' :
+                 town.type === 'town' ? 'bold 15px Arial, sans-serif' : 'bold 12px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(town.name, signX, signY + signHeight / 2 - 5);
+
+      // Population display
+      const popText = town.type === 'city' ? `Pop. ${town.population.toLocaleString()}` :
+                      town.type === 'town' ? `Pop. ${town.population}` : `${town.population} residents`;
+      ctx.font = town.type === 'city' ? '11px Arial, sans-serif' :
+                 town.type === 'town' ? '10px Arial, sans-serif' : '9px Arial, sans-serif';
+      ctx.fillStyle = '#e0e0e0';
+      ctx.fillText(popText, signX, signY + signHeight / 2 + 10);
+
+      // Welcome text for cities
+      if (town.type === 'city') {
+        ctx.font = 'italic 10px Arial, sans-serif';
+        ctx.fillStyle = '#90EE90';
+        ctx.fillText('Welcome to', signX, signY - 8);
+      }
+    });
+  }
+
   private drawBuildings(state: SimulationState) {
     const ctx = this.ctx;
 
@@ -559,8 +635,8 @@ export class Renderer {
   }
 
   private drawInundationWater(state: SimulationState) {
-    // Only draw during inundation and aftermath phases
-    if (state.phase !== 'inundation' && state.phase !== 'aftermath' && state.phase !== 'waveBreaking') {
+    // Only draw during inundation, recession and aftermath phases
+    if (state.phase !== 'inundation' && state.phase !== 'recession' && state.phase !== 'aftermath' && state.phase !== 'waveBreaking') {
       return;
     }
 
@@ -574,6 +650,10 @@ export class Renderer {
 
     if (townWaterLevels.length === 0) return;
 
+    // Different water colors for recession phase - murkier, carrying debris
+    const isReceding = state.phase === 'recession';
+    const isAftermath = state.phase === 'aftermath';
+
     // Create gradient for inundation water
     const gradient = ctx.createLinearGradient(
       config.coastEndX,
@@ -581,9 +661,22 @@ export class Renderer {
       config.townEndX,
       config.groundLevel - 100
     );
-    gradient.addColorStop(0, 'rgba(0, 100, 150, 0.75)');
-    gradient.addColorStop(0.5, 'rgba(0, 77, 120, 0.7)');
-    gradient.addColorStop(1, 'rgba(0, 60, 100, 0.6)');
+
+    if (isReceding) {
+      // Murkier water during recession - carrying sediment back
+      gradient.addColorStop(0, 'rgba(60, 90, 100, 0.7)');
+      gradient.addColorStop(0.5, 'rgba(50, 75, 90, 0.65)');
+      gradient.addColorStop(1, 'rgba(40, 60, 80, 0.5)');
+    } else if (isAftermath) {
+      // Calmer, clearer water in aftermath
+      gradient.addColorStop(0, 'rgba(0, 90, 130, 0.5)');
+      gradient.addColorStop(0.5, 'rgba(0, 70, 110, 0.4)');
+      gradient.addColorStop(1, 'rgba(0, 55, 90, 0.3)');
+    } else {
+      gradient.addColorStop(0, 'rgba(0, 100, 150, 0.75)');
+      gradient.addColorStop(0.5, 'rgba(0, 77, 120, 0.7)');
+      gradient.addColorStop(1, 'rgba(0, 60, 100, 0.6)');
+    }
 
     ctx.fillStyle = gradient;
     ctx.beginPath();
@@ -591,6 +684,7 @@ export class Renderer {
     // Start from the coast
     let started = false;
     let lastX = config.coastEndX;
+    let firstX = config.coastEndX;
 
     state.waterLevels.forEach((level) => {
       if (level.x >= config.coastEndX - 50) {
@@ -598,6 +692,7 @@ export class Renderer {
         if (waterHeight > 2) {
           if (!started) {
             ctx.moveTo(level.x, config.groundLevel);
+            firstX = level.x;
             started = true;
           }
           ctx.lineTo(level.x, level.currentLevel);
@@ -609,18 +704,19 @@ export class Renderer {
     if (started) {
       // Close the shape along the ground
       ctx.lineTo(lastX, config.groundLevel);
-      ctx.lineTo(config.coastEndX - 50, config.groundLevel);
+      ctx.lineTo(firstX, config.groundLevel);
       ctx.closePath();
       ctx.fill();
 
       // Draw foam/turbulence at the water front
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.fillStyle = isReceding ? 'rgba(200, 200, 180, 0.5)' : 'rgba(255, 255, 255, 0.6)';
       state.waterLevels.forEach((level) => {
         if (level.x >= config.townStartX) {
           const waterHeight = level.baseLevel - level.currentLevel;
           if (waterHeight > 5) {
             // Foam bubbles
-            for (let i = 0; i < 3; i++) {
+            const foamCount = isReceding ? 2 : 3;
+            for (let i = 0; i < foamCount; i++) {
               const foamX = level.x + (Math.random() - 0.5) * 20;
               const foamY = level.currentLevel + Math.random() * 10;
               const foamSize = 2 + Math.random() * 4;
@@ -648,6 +744,54 @@ export class Renderer {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
             ctx.beginPath();
             ctx.arc(frontLevel.x + 25, frontLevel.currentLevel, waterHeight * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      // Draw receding water effects
+      if (isReceding) {
+        // Find the receding edge (where water is leaving)
+        const recedingEdge = townWaterLevels.length > 0 ? townWaterLevels[townWaterLevels.length - 1] : null;
+        if (recedingEdge) {
+          const waterHeight = recedingEdge.baseLevel - recedingEdge.currentLevel;
+
+          // Draw flow lines indicating water moving back to ocean
+          ctx.strokeStyle = 'rgba(100, 150, 180, 0.4)';
+          ctx.lineWidth = 2;
+          for (let i = 0; i < 5; i++) {
+            const lineX = recedingEdge.x - i * 30;
+            if (lineX > config.townStartX) {
+              ctx.beginPath();
+              ctx.moveTo(lineX, config.groundLevel - 5);
+              ctx.lineTo(lineX - 25, config.groundLevel - 3);
+              ctx.stroke();
+            }
+          }
+
+          // Sediment/debris visual at receding edge
+          if (waterHeight > 8) {
+            ctx.fillStyle = 'rgba(101, 67, 33, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(recedingEdge.x - 10, config.groundLevel - 3, 15, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        // Draw arrows showing water direction (receding toward ocean)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        for (let x = lastX - 50; x > config.townStartX + 50; x -= 100) {
+          const level = state.waterLevels.find(l => Math.abs(l.x - x) < 15);
+          if (level && level.currentLevel < level.baseLevel - 5) {
+            // Draw arrow pointing toward ocean
+            ctx.beginPath();
+            ctx.moveTo(x, level.currentLevel + 10);
+            ctx.lineTo(x - 15, level.currentLevel + 15);
+            ctx.lineTo(x - 15, level.currentLevel + 12);
+            ctx.lineTo(x - 30, level.currentLevel + 15);
+            ctx.lineTo(x - 15, level.currentLevel + 18);
+            ctx.lineTo(x - 15, level.currentLevel + 15);
+            ctx.closePath();
             ctx.fill();
           }
         }

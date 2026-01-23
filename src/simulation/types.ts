@@ -79,6 +79,15 @@ export interface Debris {
   type: 'wood' | 'concrete' | 'metal';
 }
 
+export interface Town {
+  id: string;
+  name: string;
+  x: number;
+  width: number;
+  population: number;
+  type: 'village' | 'town' | 'city';
+}
+
 export interface Particle {
   x: number;
   y: number;
@@ -108,6 +117,7 @@ export interface SimulationState {
   earthquake: EarthquakeState;
   wave: WaveState;
   waterLevels: WaterLevel[];
+  towns: Town[];
   buildings: Building[];
   vehicles: Vehicle[];
   people: Person[];

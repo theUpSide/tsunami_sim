@@ -11,6 +11,7 @@ export type SimulationPhase =
   | 'waveShoaling'
   | 'waveBreaking'
   | 'inundation'
+  | 'recession'
   | 'aftermath';
 
 export const tsunamiFacts: TsunamiFact[] = [
@@ -69,6 +70,14 @@ export const tsunamiFacts: TsunamiFact[] = [
   {
     phase: 'aftermath',
     text: 'If you feel a strong earthquake near the coast, don\'t wait for official warnings - move to high ground immediately. Natural warnings can save your life.',
+  },
+  {
+    phase: 'recession',
+    text: 'After the initial surge, tsunami water recedes back to the ocean, often with tremendous force. This backwash can be just as dangerous as the incoming wave.',
+  },
+  {
+    phase: 'recession',
+    text: 'The receding water can drag debris, vehicles, and even people out to sea. Never assume the danger is over after the first wave.',
   },
 ];
 
