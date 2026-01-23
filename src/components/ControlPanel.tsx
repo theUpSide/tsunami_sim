@@ -24,6 +24,7 @@ const phaseLabels: Record<SimulationPhase, string> = {
   waveShoaling: 'Wave Shoaling',
   waveBreaking: 'Wave Breaking',
   inundation: 'Inundation',
+  recession: 'Water Receding',
   aftermath: 'Aftermath',
 };
 
