@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { SimulationCanvas } from './components/SimulationCanvas';
 import { ControlPanel } from './components/ControlPanel';
 import { FactDisplay } from './components/FactDisplay';
@@ -50,6 +51,7 @@ function App() {
       />
       <FactDisplay fact={state.currentFact} phase={state.phase} />
       <StatsDisplay phase={state.phase} stats={state.stats} />
+      <Analytics />
     </div>
   );
 }
